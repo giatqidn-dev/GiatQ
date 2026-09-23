@@ -1,41 +1,22 @@
-# GiatQ PWA v0.2.4 — Onboarding
+# GiatQ PWA v0.3.0 — READY AUTH
 
-Brand: **GiatQ — Biasakan yang baik**  
-Backend minimum: **GiatQ Core v0.1.6**
+Frontend siap pakai untuk GitHub Pages.
 
-## Isi versi ini
-- Icon Android/PWA diperbaiki dan dibuat maskable dengan kontras yang benar.
-- Splash GiatQ saat aplikasi dibuka.
-- Registrasi profil satu kali setelah session valid.
-- Data registrasi tersimpan ke sheet `REGISTRATIONS`.
-- Persistent session dari v0.2.3.
-- Instant checklist + batch sync dari v0.2.1.
-- Redesign UI dari v0.2.2.
-- Service worker baru agar update GitHub Pages lebih cepat terbaca.
+## Flow
+- Buka aplikasi → splash GiatQ.
+- Jika session masih valid → langsung Hari Ini.
+- Jika belum login / session habis → layar Masuk minimal: Nama + Kata sandi.
+- User baru menekan Daftar satu kali, lalu otomatis login.
 
-## Urutan deploy
-1. Replace `Code.gs` dengan GiatQ Core v0.1.6.
-2. Apps Script: Save → `GIATQ_validateSchema()` → `GIATQ_health()`.
-3. Manage deployments → Edit → New version → Deploy.
-4. Replace isi repo GitHub Pages dengan isi ZIP PWA v0.2.4.
-5. Tunggu GitHub Pages selesai build/publish.
-6. Karena icon Android lama biasanya masih dicache, hapus/uninstall GiatQ yang lama dari homescreen lalu install ulang.
+## Backend yang wajib dipakai
+GiatQ Core v0.1.7 READY AUTH.
 
-## Pengujian DEV
-Jika browser masih memiliki session DEV yang valid, splash akan langsung menuju registrasi atau dashboard.
-Jika reinstall menghapus site storage, masukkan DEV session token satu kali lagi. Setelah tersimpan, session tetap dipertahankan selama masih valid.
+## Deploy
+1. Replace Code.gs dengan Core v0.1.7.
+2. Jalankan GIATQ_install(), GIATQ_validateSchema(), lalu GIATQ_health().
+3. Edit deployment Apps Script yang sama → New version → Deploy.
+4. Replace isi repo GitHub Pages dengan isi paket PWA v0.3.0 ini.
+5. Tunggu GitHub Pages selesai publish, lalu refresh/reinstall PWA bila browser masih menyimpan cache lama.
 
-## Registrasi admin database
-Field yang disimpan:
-- nama lengkap
-- WhatsApp
-- email
-- kota/kabupaten
-- aktivitas/profesi
-- sumber mengetahui GiatQ
-- consent
-- status
-- waktu registrasi/update
-
-## Produksi
-Token manual hanya untuk testing. Tahap produksi sebaiknya memakai Google Login/OTP; session GiatQ tetap dibuat dan disimpan otomatis setelah autentikasi.
+## Catatan akun lama DEV
+Akun U_DEV adalah data pengujian. v0.3.0 tidak menampilkan Session DEV dan tidak menerima DEV account sebagai flow pengguna. Buat akun nyata lewat Daftar satu kali.

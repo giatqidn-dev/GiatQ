@@ -290,3 +290,31 @@ linear-gradient(180deg,#F7FBFE 0%,#F3F8FC 100%);min-height:100vh}.hidden{display
   #screenToday.active{grid-template-columns:minmax(0,1.7fr) 370px}
   #screenToday .activity-list,#screenActivities .activity-list{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
+
+/* READY AUTH v0.3.0 — login sengaja minimal */
+.ready-card{width:min(430px,100%);padding:34px 30px;text-align:left}
+.ready-card h1{margin:18px 0 22px;font-size:30px;line-height:1;letter-spacing:-.035em;text-align:left}
+.ready-logo{display:flex;align-items:center;gap:11px}
+.ready-logo img{width:48px;height:48px;border-radius:15px;box-shadow:0 9px 26px rgba(46,168,255,.18)}
+.ready-logo strong{font-size:23px;letter-spacing:-.03em;color:#0A2233}
+.ready-form{display:grid;gap:14px}
+.ready-form label{display:grid;gap:7px;font-size:12px;font-weight:750;color:#506779;text-align:left}
+.ready-form input{width:100%;min-height:52px;border:1px solid #CFE4F2;border-radius:15px;background:#FBFDFF;color:#0B2233;padding:0 15px;font:inherit;font-size:15px;outline:none;transition:border-color .15s ease,box-shadow .15s ease,background .15s ease}
+.ready-form input:focus{border-color:#79C7FA;background:#fff;box-shadow:0 0 0 4px rgba(46,168,255,.10)}
+.ready-form .btn{min-height:52px;border-radius:15px;font-size:14px}
+.compact-consent{grid-template-columns:auto 1fr!important;align-items:flex-start!important;gap:9px!important;font-size:11px!important;font-weight:550!important;line-height:1.45;color:#728998!important}
+.compact-consent input{width:17px!important;min-height:17px!important;height:17px!important;padding:0;margin-top:1px}
+.registration-card.ready-card{max-width:460px}
+@media(max-width:520px){
+  .auth-view,.registration-view{padding:18px;align-items:center}
+  .ready-card{padding:28px 22px;border-radius:28px}
+  .ready-card h1{font-size:28px;margin:17px 0 20px}
+  .ready-logo img{width:45px;height:45px}
+  .ready-form input,.ready-form .btn{min-height:50px}
+}
+@media(min-width:900px){
+  .auth-view,.registration-view{place-items:center;padding:48px;background:
+    radial-gradient(circle at 20% 20%,rgba(46,168,255,.13),transparent 30%),
+    linear-gradient(145deg,#F8FCFF 0%,#EDF8FF 100%)}
+  .auth-card.ready-card,.registration-card.ready-card{justify-self:center;max-width:440px;padding:38px 36px;border-radius:30px}
+}

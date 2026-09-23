@@ -8,7 +8,6 @@
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon-192-v2.png" />
   <link rel="apple-touch-icon" href="assets/icon-192-v2.png" />
-  <link rel="preconnect" href="https://accounts.google.com" />
   <link rel="stylesheet" href="styles.css" />
   <title>GiatQ — Biasakan yang baik</title>
 </head>
@@ -26,68 +25,34 @@
   <main id="registrationView" class="registration-view hidden">
     <div class="auth-glow auth-glow-a"></div>
     <div class="auth-glow auth-glow-b"></div>
-    <section class="registration-card">
-      <div class="registration-brand">
-        <img src="assets/icon-192-v2.png" alt="GiatQ" />
-        <div><strong>GiatQ</strong><span>Biasakan yang baik</span></div>
-      </div>
-      <span class="auth-kicker">SELAMAT DATANG</span>
-      <h1>Kenalan dulu, yuk.</h1>
-      <p class="registration-copy">Data ini menjadi profil GiatQ dan database pengguna untuk admin. Kamu cukup mengisinya sekali.</p>
-      <form id="registrationForm" class="registration-form">
-        <label>Nama lengkap<input id="regFullName" maxlength="120" autocomplete="name" placeholder="Nama lengkap" required /></label>
+    <section class="registration-card ready-card">
+      <div class="ready-logo"><img src="assets/icon-192-v2.png" alt="GiatQ" /><strong>GiatQ</strong></div>
+      <h1>Daftar</h1>
+      <form id="registrationForm" class="registration-form ready-form">
+        <label>Nama<input id="regFullName" maxlength="80" autocomplete="name" placeholder="Nama" required /></label>
         <label>Nomor WhatsApp<input id="regWhatsapp" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx" required /></label>
-        <div class="registration-grid">
-          <label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="nama@email.com" /></label>
-          <label>Kota / Kabupaten<input id="regCity" maxlength="120" autocomplete="address-level2" placeholder="Contoh: Purwakarta" required /></label>
-        </div>
-        <div class="registration-grid">
-          <label>Aktivitas / Profesi
-            <select id="regOccupation">
-              <option value="">Pilih (opsional)</option>
-              <option>Pelajar / Mahasiswa</option>
-              <option>Karyawan</option>
-              <option>Pengusaha</option>
-              <option>Profesional</option>
-              <option>Ibu Rumah Tangga</option>
-              <option>Lainnya</option>
-            </select>
-          </label>
-          <label>Tahu GiatQ dari
-            <select id="regReferral">
-              <option value="">Pilih (opsional)</option>
-              <option>Teman / Keluarga</option>
-              <option>Instagram</option>
-              <option>TikTok</option>
-              <option>WhatsApp</option>
-              <option>Komunitas</option>
-              <option>Lainnya</option>
-            </select>
-          </label>
-        </div>
-        <label class="consent-row"><input id="regConsent" type="checkbox" required /><span>Saya setuju data profil ini disimpan untuk akun GiatQ dan pengelolaan pengguna.</span></label>
-        <button id="registrationSubmit" class="btn btn-primary registration-submit" type="submit">Mulai GiatQ</button>
+        <label>Kota / Kabupaten<input id="regCity" maxlength="120" autocomplete="address-level2" placeholder="Purwakarta" required /></label>
+        <label>Kata sandi<input id="regPassword" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Minimal 8 karakter" required /></label>
+        <label>Ulangi kata sandi<input id="regPasswordConfirm" type="password" minlength="8" maxlength="128" autocomplete="new-password" placeholder="Ulangi kata sandi" required /></label>
+        <label class="consent-row compact-consent"><input id="regConsent" type="checkbox" required /><span>Saya setuju data akun disimpan oleh GiatQ.</span></label>
+        <button id="registrationSubmit" class="btn btn-primary registration-submit" type="submit">Daftar</button>
+        <button id="backToLogin" class="btn btn-ghost full" type="button">Masuk</button>
       </form>
-      <p class="registration-note">Data profil bersifat privat dan tidak ditampilkan ke pengguna lain.</p>
     </section>
   </main>
 
   <main id="authView" class="auth-view">
     <div class="auth-glow auth-glow-a"></div>
     <div class="auth-glow auth-glow-b"></div>
-    <section class="auth-card">
-      <div class="auth-logo-wrap">
-        <img src="assets/logo-lockup.png" class="logo-lockup" alt="GiatQ — Biasakan yang baik" />
-      </div>
-      <span class="auth-kicker">PEMBIASAAN HARIAN</span>
-      <h1>Mulai kecil. Ulangi setiap hari.</h1>
-      <p class="auth-copy">Catat kegiatanmu, cek progres harian, lalu lihat kebiasaan baik tumbuh sedikit demi sedikit.</p>
-      <div class="auth-actions">
-        <div id="googleSignIn"></div>
-        <button id="devSessionButton" class="btn btn-soft hidden" type="button">Masuk dengan Session DEV</button>
-      </div>
-      <p id="authHint" class="hint"></p>
-      <div class="auth-foot">GiatQ • Biasakan yang baik</div>
+    <section class="auth-card ready-card">
+      <div class="ready-logo"><img src="assets/icon-192-v2.png" alt="GiatQ" /><strong>GiatQ</strong></div>
+      <h1>Masuk</h1>
+      <form id="loginForm" class="ready-form">
+        <label>Nama<input id="loginName" maxlength="80" autocomplete="username" placeholder="Nama" required /></label>
+        <label>Kata sandi<input id="loginPassword" type="password" maxlength="128" autocomplete="current-password" placeholder="Kata sandi" required /></label>
+        <button id="loginSubmit" class="btn btn-primary full" type="submit">Masuk</button>
+        <button id="openRegister" class="btn btn-ghost full" type="button">Daftar</button>
+      </form>
     </section>
   </main>
 
@@ -218,7 +183,7 @@
           <div class="setting-row"><span>WhatsApp</span><strong id="profileWhatsapp">-</strong></div>
           <div class="setting-row"><span>Kota / Kabupaten</span><strong id="profileCity">-</strong></div>
           <div class="setting-row"><span>Sinkronisasi offline</span><strong>Aktif</strong></div>
-          <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.2.6</strong></div>
+          <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.3.0</strong></div>
           <div class="setting-row"><span>Brand</span><strong>Biasakan yang baik</strong></div>
         </div>
         <button id="logoutButton" class="btn btn-danger">Keluar akun</button>
@@ -270,19 +235,8 @@
     </div>
   </dialog>
 
-  <dialog id="devSessionModal" class="modal">
-    <form id="devSessionForm" class="modal-card">
-      <div class="modal-handle"></div>
-      <div class="modal-head"><div><span class="eyebrow">DEV ONLY</span><h3>Session GiatQ</h3></div><button type="button" class="close-button" data-close-dev>×</button></div>
-      <p class="hint">Tempel <code>session_token</code> dari <strong>GIATQ_devIssueSession()</strong>. Mode ini hanya untuk pengujian sebelum Google Login aktif.</p>
-      <label>Session token<textarea id="devSessionToken" rows="4" placeholder="gq_..."></textarea></label>
-      <div class="modal-actions"><button type="button" class="btn btn-soft" data-close-dev>Batal</button><button type="submit" class="btn btn-primary">Hubungkan</button></div>
-    </form>
-  </dialog>
-
   <div id="toast" class="toast hidden" role="status"></div>
 
-  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="config.js"></script>
   <script src="app.js"></script>
 </body>

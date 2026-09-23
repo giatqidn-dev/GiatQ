@@ -58,54 +58,49 @@
     $('#refreshReport').addEventListener('click', loadReport);
     $('#syncButton').addEventListener('click', refreshAll);
     $('#logoutButton').addEventListener('click', logout);
-    $('#devSessionButton').addEventListener('click',()=>$('#devSessionModal').showModal());
-    $$('[data-close-dev]').forEach(b=>b.addEventListener('click',()=>$('#devSessionModal').close()));
-    $('#devSessionForm').addEventListener('submit', connectDevSession);
+    $('#loginForm').addEventListener('submit', loginPassword);
+    $('#openRegister').addEventListener('click', showRegistrationShell);
+    $('#backToLogin').addEventListener('click', showAuthShell);
     $('#registrationForm').addEventListener('submit', saveRegistrationFromForm);
   }
 
-  let authInitialized=false;
   async function setupAuth(){
-    if(authInitialized) return;
-    authInitialized=true;
-    if(C.GOOGLE_CLIENT_ID){
-      $('#authHint').textContent = 'Masuk dengan akun Google untuk menyimpan progres GiatQ.';
-      await waitForGoogle();
-      google.accounts.id.initialize({
-        client_id: C.GOOGLE_CLIENT_ID,
-        callback: async (resp) => {
-          try{
-            const out = await apiPost('authGoogle',{id_token:resp.credential,user_agent:navigator.userAgent}, false);
-            state.sessionToken = out.session_token;
-            localStorage.setItem('giatq_session', state.sessionToken);
-            await enterApp();
-          }catch(e){ toast(e.message); }
-        }
-      });
-      google.accounts.id.renderButton($('#googleSignIn'),{theme:'outline',size:'large',shape:'pill',text:'signin_with',locale:'id',width:300});
-    } else {
-      $('#authHint').textContent = 'Google Login belum diaktifkan. Gunakan Session DEV untuk pengujian.';
-      if(C.DEV_SESSION_ENABLED) $('#devSessionButton').classList.remove('hidden');
+    return true;
+  }
+
+  async function loginPassword(e){
+    e.preventDefault();
+    const btn=$('#loginSubmit');
+    const loginName=$('#loginName').value.trim();
+    const password=$('#loginPassword').value;
+    if(!loginName || !password) return;
+    const oldText=btn.textContent;
+    btn.disabled=true;
+    btn.textContent='Masuk...';
+    try{
+      const out=await apiPost('authPassword',{
+        login_name:loginName,
+        password,
+        user_agent:navigator.userAgent,
+      }, false);
+      setNewSession(out.session_token);
+      state.me={user:out.user,registration:out.registration,entitlements:out.entitlements};
+      state.registration=out.registration||null;
+      state.today=out.today||null;
+      await enterApp();
+    }catch(err){
+      toast(err.message);
+    }finally{
+      btn.disabled=false;
+      btn.textContent=oldText;
     }
   }
 
-  function waitForGoogle(){
-    return new Promise((resolve,reject)=>{
-      let n=0; const t=setInterval(()=>{n++; if(window.google?.accounts?.id){clearInterval(t);resolve();} else if(n>80){clearInterval(t);reject(new Error('Google Sign-In gagal dimuat.'));}},100);
-    });
-  }
-
-  async function connectDevSession(e){
-    e.preventDefault();
-    const token=$('#devSessionToken').value.trim();
-    if(!token) return;
-    const old=state.sessionToken; state.sessionToken=token;
-    try{
-      await apiGet('me');
-      localStorage.setItem('giatq_session',token);
-      $('#devSessionModal').close();
-      await enterApp();
-    }catch(err){state.sessionToken=old;toast('Session tidak valid: '+err.message);}
+  function setNewSession(token){
+    state.sessionToken=String(token||'');
+    localStorage.setItem('giatq_session',state.sessionToken);
+    localStorage.removeItem('giatq_today_cache');
+    localStorage.removeItem('giatq_queue');
   }
 
   async function enterApp(){
@@ -130,7 +125,6 @@
 
   function showRegistrationShell(){
     hideAllShells();
-    prefillRegistration();
     $('#registrationView').classList.remove('hidden');
   }
 
@@ -154,25 +148,31 @@
   }
 
   async function recoverSession(fromOnlineEvent){
-    if(!state.sessionToken) return;
+    if(!state.sessionToken){
+      showAuthShell();
+      return false;
+    }
     try{
       await refreshAll();
-      if(state.registration?.registered) showAppShell();
-      else showRegistrationShell();
+      if(String(state.me?.user?.user_id||'').startsWith('U_DEV_')){
+        clearSession();
+        showAuthShell();
+        toast('Gunakan akun GiatQ.');
+        return false;
+      }
+      showAppShell();
       return true;
     }catch(e){
       if(isSessionError(e)){
         clearSession();
-        await setupAuth();
         showAuthShell();
-        toast('Sesi berakhir. Silakan masuk kembali.');
+        if(!fromOnlineEvent) toast('Silakan masuk kembali.');
         return false;
       }
-      const registrationCached=localStorage.getItem('giatq_registration_done')==='1';
-      if(registrationCached) showAppShell();
-      else showRegistrationShell();
+      // Saat jaringan bermasalah, jangan lempar user ke layar login.
+      showAppShell();
       setSyncState(navigator.onLine?'pending':'offline');
-      if(!fromOnlineEvent) toast('Belum tersambung ke server. Data terakhir tetap ditampilkan.');
+      if(!fromOnlineEvent) toast('Belum tersambung. Data terakhir tetap ditampilkan.');
       return false;
     }
   }
@@ -189,7 +189,6 @@
     state.me=me; state.today=today; state.activities=activities; state.registration=me?.registration||null;
     // Jangan biarkan response server yang sedikit tertinggal menimpa tap lokal yang masih antre.
     applyQueuedEventsToToday(getQueue());
-    if(state.registration?.registered) localStorage.setItem('giatq_registration_done','1');
     renderToday(); renderActivities(); renderProfile(); updateHeaderDate();
     localStorage.setItem('giatq_today_cache',JSON.stringify(today));
     await flushQueue();
@@ -337,56 +336,71 @@
     if($('#profileWhatsapp')) $('#profileWhatsapp').textContent=p.whatsapp?('+'+p.whatsapp):'-';
     if($('#profileCity')) $('#profileCity').textContent=p.city||'-';
   }
-  function prefillRegistration(){
-    const u=state.me?.user||{}, p=state.registration?.profile||{};
-    $('#regFullName').value=p.full_name||u.display_name||'';
-    $('#regWhatsapp').value=p.whatsapp||'';
-    $('#regEmail').value=p.email||u.email||'';
-    $('#regCity').value=p.city||'';
-    $('#regOccupation').value=p.occupation||'';
-    $('#regReferral').value=p.referral_source||'';
-    $('#regConsent').checked=Boolean(p.consent_privacy);
-  }
-
   async function saveRegistrationFromForm(e){
     e.preventDefault();
     const btn=$('#registrationSubmit');
+    const password=$('#regPassword').value;
+    const confirmPassword=$('#regPasswordConfirm').value;
     const profile={
       full_name:$('#regFullName').value.trim(),
       whatsapp:$('#regWhatsapp').value.trim(),
-      email:$('#regEmail').value.trim(),
       city:$('#regCity').value.trim(),
-      occupation:$('#regOccupation').value,
-      referral_source:$('#regReferral').value,
       consent_privacy:$('#regConsent').checked,
     };
     if(!profile.full_name||!profile.whatsapp||!profile.city||!profile.consent_privacy){
-      toast('Lengkapi data wajib terlebih dahulu.');
+      toast('Lengkapi data wajib.');
       return;
     }
-    const oldText=btn.textContent; btn.disabled=true; btn.textContent='Menyimpan...';
+    if(password.length<8){
+      toast('Kata sandi minimal 8 karakter.');
+      return;
+    }
+    if(password!==confirmPassword){
+      toast('Ulangi kata sandi belum sama.');
+      return;
+    }
+    const oldText=btn.textContent;
+    btn.disabled=true;
+    btn.textContent='Mendaftar...';
     try{
-      state.registration=await apiPost('saveRegistration',{profile});
-      localStorage.setItem('giatq_registration_done','1');
-      await refreshAll();
-      showAppShell();
-      toast('Profil GiatQ tersimpan.');
+      const out=await apiPost('registerPassword',{
+        profile,
+        password,
+        user_agent:navigator.userAgent,
+      }, false);
+      setNewSession(out.session_token);
+      state.me={user:out.user,registration:out.registration,entitlements:out.entitlements};
+      state.registration=out.registration||null;
+      state.today=out.today||null;
+      await enterApp();
+      toast('Akun GiatQ siap.');
     }catch(err){
       toast(err.message);
     }finally{
-      btn.disabled=false; btn.textContent=oldText;
+      btn.disabled=false;
+      btn.textContent=oldText;
     }
   }
 
   function openPaywall(feature){ $('#paywallTitle').textContent=`Buka ${feature}`; $('#paywallCopy').textContent=`${feature} tersedia di GiatQ Premium. Free tetap bisa digunakan untuk checklist, kegiatan harian, persentase, dan laporan harian dasar.`; $('#paywallModal').showModal(); }
   async function logout(){
-    const ok=confirm('Keluar akun akan menghapus sesi di perangkat ini. Pada mode DEV kamu akan diminta memasukkan token lagi. Untuk sekadar menutup GiatQ, gunakan tombol Home/Back tanpa menekan Keluar akun. Lanjut keluar akun?');
+    const ok=confirm('Keluar dari GiatQ?');
     if(!ok) return;
     try{await apiPost('logout',{});}catch(_){ }
     clearSession();
     location.reload();
   }
-  function clearSession(){state.sessionToken='';localStorage.removeItem('giatq_session');localStorage.removeItem('giatq_registration_done');}
+  function clearSession(){
+    state.sessionToken='';
+    state.me=null;
+    state.today=null;
+    state.activities=[];
+    state.registration=null;
+    localStorage.removeItem('giatq_session');
+    localStorage.removeItem('giatq_today_cache');
+    localStorage.removeItem('giatq_queue');
+    localStorage.removeItem('giatq_registration_done');
+  }
 
   async function apiGet(action, params={}){
     return apiRequest('GET',action,params,true);
