@@ -11,6 +11,8 @@
     report: null,
     activeScreen: 'Today',
     apiModeResolved: null,
+    syncTimer: null,
+    syncInFlight: false,
   };
   const DAYS = [
     ['MON','Sen'],['TUE','Sel'],['WED','Rab'],['THU','Kam'],['FRI','Jum'],['SAT','Sab'],['SUN','Min']
@@ -107,6 +109,7 @@
     renderToday(); renderActivities(); renderProfile(); updateHeaderDate();
     localStorage.setItem('giatq_today_cache',JSON.stringify(today));
     await flushQueue();
+    if(navigator.onLine && !getQueue().length) setSyncState('synced');
   }
 
   function updateHeaderDate(){
@@ -120,6 +123,10 @@
     $('#scoreText').textContent=pct+'%'; $('#scoreRingText').textContent=pct+'%'; $('#scoreRing').style.setProperty('--score',pct);
     const done=Number(b.score?.completed_count||0), total=Number(b.score?.eligible_count||0);
     $('#scoreSubtitle').textContent= total ? `${done} dari ${total} kegiatan selesai` : 'Mulai dari satu kegiatan kecil.';
+    const pending=Math.max(0,total-done);
+    if($('#summaryDone')) $('#summaryDone').textContent=done;
+    if($('#summaryPending')) $('#summaryPending').textContent=pending;
+    if($('#summaryTotal')) $('#summaryTotal').textContent=total;
     $('#todayCount').textContent=`${b.activities.length} kegiatan terjadwal`;
     const list=$('#todayList'); list.innerHTML='';
     $('#todayEmpty').classList.toggle('hidden', b.activities.length>0);
@@ -139,30 +146,40 @@
     const type=String(a.activity_type||'CHECKLIST').toUpperCase();
     const time=a.display_time||a.fixed_time||'Fleksibel';
     const target=Number(a.target_value||1);
+    const category=String(a.category||'PERSONAL').toUpperCase();
+    const tag=`<span class="tag ${esc(category)}">${esc(category)}</span>`;
+    const timePill=`<span class="time-pill">${esc(time)}</span>`;
     if(todayMode && type==='CHECKLIST'){
-      el.innerHTML=`<button class="check-button" aria-label="Checklist">${done?'✓':''}</button><div class="activity-main"><strong>${esc(a.name)}</strong><div class="activity-meta"><span class="tag">${esc(a.category||'PERSONAL')}</span><span>${esc(time)}</span></div></div><div></div>`;
+      el.innerHTML=`<button class="check-button" aria-label="Checklist ${esc(a.name)}">${done?'✓':''}</button><div class="activity-main"><strong>${esc(a.name)}</strong><div class="activity-meta">${tag}</div></div>${timePill}`;
       $('.check-button',el).addEventListener('click',()=>toggleActivity(a,!done));
     } else if(todayMode) {
       const progress=Number(a.progress_value||0);
-      el.innerHTML=`<div class="check-button" style="display:grid;place-items:center;color:${done?'#fff':'#28A3FE'}">${done?'✓':'•'}</div><div class="activity-main"><strong>${esc(a.name)}</strong><div class="activity-meta"><span class="tag">${esc(a.category||'PERSONAL')}</span><span>${progress}/${target} ${esc(a.unit||'')}</span><span>${esc(time)}</span></div></div><div class="progress-mini"><input type="number" min="0" step="0.01" value="${progress}" aria-label="Progress ${esc(a.name)}"></div>`;
+      el.innerHTML=`<div class="check-button" style="color:${done?'#fff':'#2EA8FF'}">${done?'✓':'•'}</div><div class="activity-main"><strong>${esc(a.name)}</strong><div class="activity-meta">${tag}<span>${progress}/${target} ${esc(a.unit||'')}</span>${timePill}</div></div><div class="progress-mini"><input type="number" min="0" step="0.01" value="${progress}" aria-label="Progress ${esc(a.name)}"></div>`;
       $('input',el).addEventListener('change',e=>setProgress(a,Number(e.target.value||0)));
     } else {
-      el.innerHTML=`<div class="check-button" style="display:grid;place-items:center;color:#28A3FE">•</div><div class="activity-main"><strong>${esc(a.name)}</strong><div class="activity-meta"><span class="tag">${esc(a.category||'PERSONAL')}</span><span>${esc(a.schedule_type||'DAILY')}</span><span>${esc(a.fixed_time||'Fleksibel')}</span></div></div><div class="activity-actions"><button class="tiny-button edit">Ubah</button><button class="tiny-button archive">×</button></div>`;
+      el.innerHTML=`<div class="check-button" style="color:#2EA8FF">•</div><div class="activity-main"><strong>${esc(a.name)}</strong><div class="activity-meta">${tag}<span>${esc(a.schedule_type||'DAILY')}</span>${timePill}</div></div><div class="activity-actions"><button class="tiny-button edit">Ubah</button><button class="tiny-button archive">×</button></div>`;
       $('.edit',el).addEventListener('click',()=>openActivityModal(a));
       $('.archive',el).addEventListener('click',()=>archiveActivity(a));
     }
     return el;
   }
 
-  async function toggleActivity(a,done){
+  function toggleActivity(a,done){
     const body={activity_id:a.activity_id,date:state.today?.date,done,client_event_id:clientEventId()};
-    try{ state.today=await apiPost('toggleChecklist',body); renderToday(); localStorage.setItem('giatq_today_cache',JSON.stringify(state.today)); }
-    catch(e){ queueAction('toggleChecklist',body); optimisticToggle(a.activity_id,done); toast('Disimpan di perangkat. Akan disinkronkan.'); }
+    // INSTANT UI: jangan tunggu Apps Script/network.
+    optimisticToggle(a.activity_id,done);
+    localStorage.setItem('giatq_today_cache',JSON.stringify(state.today));
+    queueAction('toggleChecklist',body);
+    setSyncState('pending');
+    scheduleFlush();
   }
-  async function setProgress(a,value){
+  function setProgress(a,value){
     const body={activity_id:a.activity_id,date:state.today?.date,value,client_event_id:clientEventId()};
-    try{ state.today=await apiPost('setProgress',body); renderToday(); localStorage.setItem('giatq_today_cache',JSON.stringify(state.today)); }
-    catch(e){ queueAction('setProgress',body); optimisticProgress(a.activity_id,value); toast('Progress disimpan lokal.'); }
+    optimisticProgress(a.activity_id,value);
+    localStorage.setItem('giatq_today_cache',JSON.stringify(state.today));
+    queueAction('setProgress',body);
+    setSyncState('pending');
+    scheduleFlush();
   }
 
   function optimisticToggle(id,done){
@@ -268,10 +285,55 @@
     try{return JSON.parse(text);}catch(_){throw new Error('Respons API bukan JSON. Jika mode direct gagal di HP, aktifkan proxy /api.');}
   }
 
-  function queueAction(action,body){const q=getQueue();q.push({id:clientEventId(),action,body,created_at:new Date().toISOString()});localStorage.setItem('giatq_queue',JSON.stringify(q));}
+  function queueAction(action,body){
+    const q=getQueue();
+    // Untuk progress yang sama, simpan nilai terbaru saja sebelum batch terkirim.
+    const key=action+'|'+String(body.activity_id||'')+'|'+String(body.date||'');
+    if(action==='setProgress'){
+      for(let i=q.length-1;i>=0;i--){
+        const x=q[i], k=x.action+'|'+String(x.body?.activity_id||'')+'|'+String(x.body?.date||'');
+        if(k===key){q.splice(i,1);break;}
+      }
+    }
+    q.push({id:body.client_event_id||clientEventId(),action,body,created_at:new Date().toISOString()});
+    localStorage.setItem('giatq_queue',JSON.stringify(q));
+  }
   function getQueue(){try{return JSON.parse(localStorage.getItem('giatq_queue')||'[]')}catch(_){return[]}}
-  async function flushQueue(){if(!navigator.onLine||!state.sessionToken)return;const q=getQueue();if(!q.length)return;const remain=[];for(const item of q){try{await apiPost(item.action,item.body);}catch(_){remain.push(item)}}localStorage.setItem('giatq_queue',JSON.stringify(remain));if(q.length!==remain.length)toast('Sinkronisasi selesai.');}
-  function updateOnlineState(){$('#offlineBar').classList.toggle('hidden',navigator.onLine);}
+  function scheduleFlush(){
+    clearTimeout(state.syncTimer);
+    state.syncTimer=setTimeout(()=>flushQueue(),220); // tap beruntun digabung satu request
+  }
+  async function flushQueue(){
+    if(!navigator.onLine||!state.sessionToken||state.syncInFlight)return;
+    const q=getQueue(); if(!q.length)return;
+    state.syncInFlight=true;
+    setSyncState('syncing');
+    try{
+      // v0.2.1: SATU HTTP request untuk banyak tap.
+      const bundle=await apiPost('syncEvents',{events:q});
+      localStorage.setItem('giatq_queue','[]');
+      if(bundle?.activities){ state.today=bundle; renderToday(); localStorage.setItem('giatq_today_cache',JSON.stringify(bundle)); }
+      setSyncState('synced');
+    }catch(e){
+      // Queue tetap ada; UI lokal tidak dibatalkan. Akan retry saat online/sync berikutnya.
+      console.warn('GiatQ sync pending',e);
+      setSyncState('pending');
+    }finally{
+      state.syncInFlight=false;
+      // Kalau user menekan checklist saat request berjalan, kirim batch berikutnya.
+      if(getQueue().length && navigator.onLine) scheduleFlush();
+    }
+  }
+  function updateOnlineState(){
+    $('#offlineBar').classList.toggle('hidden',navigator.onLine);
+    setSyncState(navigator.onLine ? (getQueue().length?'pending':'synced') : 'offline');
+  }
+  function setSyncState(mode){
+    const chip=document.querySelector('.sync-chip'); if(!chip)return;
+    chip.dataset.state=mode;
+    const label=chip.querySelector('span');
+    if(label) label.textContent=mode==='syncing'?'Menyimpan…':mode==='pending'?'Menunggu sync':mode==='offline'?'Offline':'Tersinkron';
+  }
   function toast(msg){const t=$('#toast');t.textContent=msg;t.classList.remove('hidden');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.add('hidden'),2600)}
   function clientEventId(){return 'evt_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,10)}
   function truthy(v){return v===true||v===1||String(v).toLowerCase()==='true'||String(v)==='1'}

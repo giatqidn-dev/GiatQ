@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#28A3FE" />
+  <meta name="theme-color" content="#2EA8FF" />
   <meta name="description" content="GiatQ — Biasakan yang baik" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icon-192.png" />
@@ -13,121 +13,167 @@
   <title>GiatQ — Biasakan yang baik</title>
 </head>
 <body>
-  <div id="offlineBar" class="offline-bar hidden">Offline — checklist akan disinkronkan saat internet kembali.</div>
+  <div id="offlineBar" class="offline-bar hidden">Offline — progres tetap tersimpan dan akan disinkronkan saat internet kembali.</div>
 
   <main id="authView" class="auth-view">
+    <div class="auth-glow auth-glow-a"></div>
+    <div class="auth-glow auth-glow-b"></div>
     <section class="auth-card">
-      <img src="assets/logo-lockup.png" class="logo-lockup" alt="GiatQ — Biasakan yang baik" />
-      <p class="auth-copy">Kegiatan kecil yang dilakukan berulang akan jadi kebiasaan.</p>
-      <div id="googleSignIn"></div>
-      <button id="devSessionButton" class="btn btn-soft hidden" type="button">Masuk dengan Session DEV</button>
+      <div class="auth-logo-wrap">
+        <img src="assets/logo-lockup.png" class="logo-lockup" alt="GiatQ — Biasakan yang baik" />
+      </div>
+      <span class="auth-kicker">PEMBIASAAN HARIAN</span>
+      <h1>Mulai kecil. Ulangi setiap hari.</h1>
+      <p class="auth-copy">Catat kegiatanmu, cek progres harian, lalu lihat kebiasaan baik tumbuh sedikit demi sedikit.</p>
+      <div class="auth-actions">
+        <div id="googleSignIn"></div>
+        <button id="devSessionButton" class="btn btn-soft hidden" type="button">Masuk dengan Session DEV</button>
+      </div>
       <p id="authHint" class="hint"></p>
+      <div class="auth-foot">GiatQ • Biasakan yang baik</div>
     </section>
   </main>
 
   <div id="appView" class="app-shell hidden">
-    <header class="app-header">
-      <div>
-        <div class="brand-row"><img src="assets/icon-192.png" alt="" /><strong>GiatQ</strong></div>
-        <div id="headerDate" class="header-date"></div>
+    <aside class="desktop-rail" aria-label="Navigasi desktop">
+      <div class="rail-brand"><img src="assets/icon-192.png" alt="GiatQ" /><span>GiatQ</span></div>
+      <div class="rail-nav">
+        <button class="nav-item active" data-screen="Today" aria-label="Hari Ini">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><small>Hari Ini</small>
+        </button>
+        <button class="nav-item" data-screen="Activities" aria-label="KegiatanKU">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><small>KegiatanKU</small>
+        </button>
+        <button class="nav-item" data-screen="Report" aria-label="Laporan">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><small>Laporan</small>
+        </button>
+        <button class="nav-item" data-screen="Premium" aria-label="Premium">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 3 5 5 .8-3.7 4 1 5.7L12 16l-5.3 2.5 1-5.7-3.7-4L9 8l3-5Z"/></svg><small>Premium</small>
+        </button>
+        <button class="nav-item" data-screen="Profile" aria-label="Profil">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 3.7-6 8-6s7.2 2 8 6"/></svg><small>Profil</small>
+        </button>
       </div>
-      <button id="syncButton" class="icon-button" type="button" title="Sinkronkan">↻</button>
-    </header>
+    </aside>
 
-    <section id="screenToday" class="screen active">
-      <div class="hero-card">
-        <div class="hero-copy">
-          <span class="eyebrow">PENCAPAIAN HARI INI</span>
-          <h1 id="scoreText">0%</h1>
-          <p id="scoreSubtitle">Belum ada kegiatan selesai.</p>
+    <div class="app-main">
+      <header class="app-header">
+        <div class="header-brand-block">
+          <div class="brand-row"><img src="assets/icon-192.png" alt="" /><strong>GiatQ</strong></div>
+          <div id="headerDate" class="header-date"></div>
         </div>
-        <div id="scoreRing" class="score-ring" style="--score:0"><span id="scoreRingText">0%</span></div>
-      </div>
-
-      <div class="section-head">
-        <div><h2>Kegiatan Hari Ini</h2><p id="todayCount" class="section-subtitle"></p></div>
-        <button class="btn btn-primary btn-small" data-open-activity>+ Tambah</button>
-      </div>
-      <div id="todayList" class="activity-list"></div>
-      <div id="todayEmpty" class="empty-state hidden">
-        <div class="empty-icon">✓</div>
-        <h3>Belum ada kegiatan hari ini</h3>
-        <p>Tambahkan satu kegiatan kecil untuk mulai membiasakan yang baik.</p>
-        <button class="btn btn-primary" data-open-activity>Tambah Kegiatan</button>
-      </div>
-    </section>
-
-    <section id="screenActivities" class="screen">
-      <div class="section-head top-gap">
-        <div><h2>KegiatanKU</h2><p class="section-subtitle">Atur kegiatan yang ingin dibiasakan.</p></div>
-        <button class="btn btn-primary btn-small" data-open-activity>+ Tambah</button>
-      </div>
-      <div id="allActivitiesList" class="activity-list"></div>
-    </section>
-
-    <section id="screenReport" class="screen">
-      <div class="section-head top-gap">
-        <div><h2>Laporan Harian</h2><p class="section-subtitle">Update otomatis dari kegiatanmu hari ini.</p></div>
-        <button id="refreshReport" class="btn btn-soft btn-small">Perbarui</button>
-      </div>
-      <div class="report-card">
-        <span class="eyebrow">HARI INI</span>
-        <div class="report-score" id="reportScore">0%</div>
-        <p id="reportSummary">Belum ada laporan.</p>
-        <div class="report-stats">
-          <div><strong id="reportDone">0</strong><span>Selesai</span></div>
-          <div><strong id="reportPending">0</strong><span>Belum</span></div>
-          <div><strong id="reportEligible">0</strong><span>Dinilai</span></div>
+        <div class="header-actions">
+          <span class="sync-chip"><i></i><span>Tersinkron</span></span>
+          <button id="syncButton" class="icon-button" type="button" title="Sinkronkan" aria-label="Sinkronkan">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6.5 8.5A7 7 0 0 1 18.8 7M5.2 17A7 7 0 0 0 17.5 15.5"/></svg>
+          </button>
         </div>
-      </div>
-      <button class="premium-preview" data-premium="Progress Mingguan">
-        <div><span class="lock">🔒</span><strong>Progress Mingguan</strong><p>Lihat pola pencapaian 7 hari terakhir.</p></div><span>Premium</span>
-      </button>
-      <button class="premium-preview" data-premium="Insight Kebiasaan">
-        <div><span class="lock">🔒</span><strong>Insight Kebiasaan</strong><p>Temukan kebiasaan yang paling konsisten dan yang perlu diperbaiki.</p></div><span>Premium</span>
-      </button>
-    </section>
+      </header>
 
-    <section id="screenPremium" class="screen">
-      <div class="premium-hero top-gap">
-        <span class="pill">GiatQ Premium</span>
-        <h2>Naik satu langkah lagi.</h2>
-        <p>Free tetap bisa dipakai. Premium membuka sistem target dan insight yang lebih lengkap.</p>
-      </div>
-      <div class="premium-grid">
-        <button class="premium-feature" data-premium="TargetKU"><span>🎯</span><div><strong>TargetKU</strong><p>One Day One Juz, lari 5 km, puasa Senin–Kamis, dan target custom.</p></div><b>🔒</b></button>
-        <button class="premium-feature" data-premium="Adaptive Baby Step"><span>👣</span><div><strong>Adaptive Baby Step</strong><p>Target menyesuaikan konsistensi agar tetap realistis.</p></div><b>🔒</b></button>
-        <button class="premium-feature" data-premium="Target Pace"><span>📍</span><div><strong>Target Pace</strong><p>Tahu ritme yang dibutuhkan agar target bulanan tercapai.</p></div><b>🔒</b></button>
-        <button class="premium-feature" data-premium="Langkah Berikutnya"><span>✨</span><div><strong>Langkah Berikutnya</strong><p>Satu rekomendasi kecil untuk esok hari.</p></div><b>🔒</b></button>
-        <button class="premium-feature" data-premium="Laporan Bulanan"><span>📊</span><div><strong>Laporan Mingguan & Bulanan</strong><p>Grafik, tren, milestone, dan perkembangan per kategori.</p></div><b>🔒</b></button>
-        <button class="premium-feature" data-premium="Reminder Pintar"><span>🔔</span><div><strong>Reminder Pintar</strong><p>Pengingat berdasarkan pola kegiatan dan jadwal salat.</p></div><b>🔒</b></button>
-      </div>
-    </section>
+      <section id="screenToday" class="screen active">
+        <div class="hero-card">
+          <div class="hero-orb hero-orb-a"></div><div class="hero-orb hero-orb-b"></div>
+          <div class="hero-copy">
+            <span class="eyebrow light">PENCAPAIAN HARI INI</span>
+            <h1 id="scoreText">0%</h1>
+            <p id="scoreSubtitle">Belum ada kegiatan selesai.</p>
+          </div>
+          <div id="scoreRing" class="score-ring" style="--score:0"><span id="scoreRingText">0%</span></div>
+        </div>
 
-    <section id="screenProfile" class="screen">
-      <div class="profile-card top-gap">
-        <div class="avatar" id="profileAvatar">G</div>
-        <div><h2 id="profileName">Pengguna GiatQ</h2><p id="profileEmail"></p></div>
-      </div>
-      <div class="settings-list">
-        <div class="setting-row"><span>Paket</span><strong id="profilePlan">FREE</strong></div>
-        <div class="setting-row"><span>Sinkronisasi offline</span><strong>Aktif</strong></div>
-        <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.2.0</strong></div>
-      </div>
-      <button id="logoutButton" class="btn btn-danger">Keluar</button>
-    </section>
+        <div class="summary-strip" aria-label="Ringkasan hari ini">
+          <div><span>Selesai</span><strong id="summaryDone">0</strong></div>
+          <div><span>Belum</span><strong id="summaryPending">0</strong></div>
+          <div><span>Total</span><strong id="summaryTotal">0</strong></div>
+        </div>
+
+        <div class="section-head">
+          <div><span class="section-kicker">HARI INI</span><h2>Kegiatan Harian</h2><p id="todayCount" class="section-subtitle"></p></div>
+          <button class="btn btn-primary btn-small" data-open-activity><span class="plus">+</span> Tambah</button>
+        </div>
+        <div id="todayList" class="activity-list"></div>
+        <div id="todayEmpty" class="empty-state hidden">
+          <div class="empty-icon">✓</div>
+          <h3>Belum ada kegiatan hari ini</h3>
+          <p>Mulai dari satu kegiatan kecil. Besok, ulangi lagi.</p>
+          <button class="btn btn-primary" data-open-activity>Tambah Kegiatan</button>
+        </div>
+      </section>
+
+      <section id="screenActivities" class="screen">
+        <div class="page-title top-gap"><span class="section-kicker">ATUR RUTINITAS</span><h2>KegiatanKU</h2><p>Buat, ubah, dan pilih kegiatan yang ingin kamu biasakan.</p></div>
+        <div class="section-head compact-head">
+          <div><p class="section-subtitle">Semua kegiatan aktif</p></div>
+          <button class="btn btn-primary btn-small" data-open-activity><span class="plus">+</span> Tambah</button>
+        </div>
+        <div id="allActivitiesList" class="activity-list"></div>
+      </section>
+
+      <section id="screenReport" class="screen">
+        <div class="page-title top-gap"><span class="section-kicker">EVALUASI HARIAN</span><h2>Laporan</h2><p>Lihat ringkasan pencapaian tanpa harus menghitung sendiri.</p></div>
+        <div class="report-card">
+          <div class="report-head"><div><span class="eyebrow">HARI INI</span><div class="report-score" id="reportScore">0%</div></div><button id="refreshReport" class="icon-button soft-icon" title="Perbarui" aria-label="Perbarui laporan"><svg viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M6.5 8.5A7 7 0 0 1 18.8 7M5.2 17A7 7 0 0 0 17.5 15.5"/></svg></button></div>
+          <p id="reportSummary">Belum ada laporan.</p>
+          <div class="report-stats">
+            <div><strong id="reportDone">0</strong><span>Selesai</span></div>
+            <div><strong id="reportPending">0</strong><span>Belum</span></div>
+            <div><strong id="reportEligible">0</strong><span>Dinilai</span></div>
+          </div>
+        </div>
+        <button class="premium-preview" data-premium="Progress Mingguan">
+          <span class="premium-mini-icon">↗</span><div><strong>Progress Mingguan</strong><p>Lihat pola pencapaian 7 hari terakhir.</p></div><span class="premium-badge">Premium</span>
+        </button>
+        <button class="premium-preview" data-premium="Insight Kebiasaan">
+          <span class="premium-mini-icon">✦</span><div><strong>Insight Kebiasaan</strong><p>Temukan kebiasaan yang paling konsisten dan yang perlu diperbaiki.</p></div><span class="premium-badge">Premium</span>
+        </button>
+      </section>
+
+      <section id="screenPremium" class="screen">
+        <div class="premium-hero top-gap">
+          <div class="premium-shine"></div>
+          <span class="pill">GIATQ PREMIUM</span>
+          <h2>Naik satu langkah lagi.</h2>
+          <p>Free tetap berguna setiap hari. Premium membuka target, insight, dan sistem pembiasaan yang lebih lengkap.</p>
+          <div class="premium-hero-foot"><span>◆</span> Semua fitur tetap terlihat, buka saat kamu butuh.</div>
+        </div>
+        <div class="premium-grid">
+          <button class="premium-feature" data-premium="TargetKU"><span class="feature-icon">◎</span><div><strong>TargetKU</strong><p>One Day One Juz, lari 5 km, puasa Senin–Kamis, dan target custom.</p></div><b>🔒</b></button>
+          <button class="premium-feature" data-premium="Adaptive Baby Step"><span class="feature-icon">↗</span><div><strong>Adaptive Baby Step</strong><p>Target menyesuaikan konsistensi agar tetap realistis.</p></div><b>🔒</b></button>
+          <button class="premium-feature" data-premium="Target Pace"><span class="feature-icon">⌁</span><div><strong>Target Pace</strong><p>Tahu ritme yang dibutuhkan agar target bulanan tercapai.</p></div><b>🔒</b></button>
+          <button class="premium-feature" data-premium="Langkah Berikutnya"><span class="feature-icon">✦</span><div><strong>Langkah Berikutnya</strong><p>Satu rekomendasi kecil untuk esok hari.</p></div><b>🔒</b></button>
+          <button class="premium-feature" data-premium="Laporan Bulanan"><span class="feature-icon">▥</span><div><strong>Laporan Mingguan & Bulanan</strong><p>Grafik, tren, milestone, dan perkembangan per kategori.</p></div><b>🔒</b></button>
+          <button class="premium-feature" data-premium="Reminder Pintar"><span class="feature-icon">◷</span><div><strong>Reminder Pintar</strong><p>Pengingat berdasarkan pola kegiatan dan jadwal salat.</p></div><b>🔒</b></button>
+        </div>
+      </section>
+
+      <section id="screenProfile" class="screen">
+        <div class="page-title top-gap"><span class="section-kicker">AKUN</span><h2>Profil</h2><p>Kelola identitas dan status paket GiatQ.</p></div>
+        <div class="profile-card">
+          <div class="avatar" id="profileAvatar">G</div>
+          <div class="profile-copy"><h2 id="profileName">Pengguna GiatQ</h2><p id="profileEmail"></p></div>
+          <span id="profilePlan" class="plan-badge">FREE</span>
+        </div>
+        <div class="settings-list">
+          <div class="setting-row"><span>Sinkronisasi offline</span><strong>Aktif</strong></div>
+          <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.2.2</strong></div>
+          <div class="setting-row"><span>Brand</span><strong>Biasakan yang baik</strong></div>
+        </div>
+        <button id="logoutButton" class="btn btn-danger">Keluar dari GiatQ</button>
+      </section>
+    </div>
 
     <nav class="bottom-nav" aria-label="Navigasi utama">
-      <button class="nav-item active" data-screen="Today"><span>✓</span><small>Hari Ini</small></button>
-      <button class="nav-item" data-screen="Activities"><span>☷</span><small>KegiatanKU</small></button>
-      <button class="nav-item" data-screen="Report"><span>▥</span><small>Laporan</small></button>
-      <button class="nav-item" data-screen="Premium"><span>◆</span><small>Premium</small></button>
-      <button class="nav-item" data-screen="Profile"><span>○</span><small>Profil</small></button>
+      <button class="nav-item active" data-screen="Today"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg><small>Hari Ini</small></button>
+      <button class="nav-item" data-screen="Activities"><svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg><small>KegiatanKU</small></button>
+      <button class="nav-item" data-screen="Report"><svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg><small>Laporan</small></button>
+      <button class="nav-item" data-screen="Premium"><svg viewBox="0 0 24 24"><path d="m12 3 3 5 5 .8-3.7 4 1 5.7L12 16l-5.3 2.5 1-5.7-3.7-4L9 8l3-5Z"/></svg><small>Premium</small></button>
+      <button class="nav-item" data-screen="Profile"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c.8-4 3.7-6 8-6s7.2 2 8 6"/></svg><small>Profil</small></button>
     </nav>
   </div>
 
   <dialog id="activityModal" class="modal">
     <form id="activityForm" method="dialog" class="modal-card">
+      <div class="modal-handle"></div>
       <div class="modal-head"><div><span class="eyebrow">KEGIATANKU</span><h3 id="activityModalTitle">Tambah Kegiatan</h3></div><button type="button" class="close-button" data-close-activity>×</button></div>
       <input type="hidden" id="activityId" />
       <label>Nama kegiatan<input id="activityName" maxlength="80" placeholder="Contoh: Baca 10 halaman" required /></label>
@@ -144,15 +190,16 @@
         <label>Masuk skor<select id="activityScored"><option value="true">Ya</option><option value="false">Tidak</option></select></label>
       </div>
       <fieldset><legend>Hari aktif</legend><div class="days" id="daysPicker"></div></fieldset>
-      <div class="modal-actions"><button type="button" class="btn btn-soft" data-close-activity>Batal</button><button type="submit" class="btn btn-primary">Simpan</button></div>
+      <div class="modal-actions"><button type="button" class="btn btn-soft" data-close-activity>Batal</button><button type="submit" class="btn btn-primary">Simpan Kegiatan</button></div>
     </form>
   </dialog>
 
   <dialog id="paywallModal" class="modal">
     <div class="modal-card paywall-card">
+      <div class="modal-handle"></div>
       <button class="close-button paywall-close" data-close-paywall>×</button>
       <div class="paywall-icon">◆</div>
-      <span class="pill">GiatQ Premium</span>
+      <span class="pill">GIATQ PREMIUM</span>
       <h3 id="paywallTitle">Buka fitur Premium</h3>
       <p id="paywallCopy">Dapatkan target, insight, laporan lengkap, dan sistem baby step yang lebih pintar.</p>
       <button class="btn btn-primary full">Lihat Paket Premium</button>
@@ -162,6 +209,7 @@
 
   <dialog id="devSessionModal" class="modal">
     <form id="devSessionForm" class="modal-card">
+      <div class="modal-handle"></div>
       <div class="modal-head"><div><span class="eyebrow">DEV ONLY</span><h3>Session GiatQ</h3></div><button type="button" class="close-button" data-close-dev>×</button></div>
       <p class="hint">Tempel <code>session_token</code> dari <strong>GIATQ_devIssueSession()</strong>. Mode ini hanya untuk pengujian sebelum Google Login aktif.</p>
       <label>Session token<textarea id="devSessionToken" rows="4" placeholder="gq_..."></textarea></label>
@@ -169,10 +217,10 @@
     </form>
   </dialog>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast" class="toast hidden" role="status"></div>
 
-  <script src="config.js"></script>
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>
