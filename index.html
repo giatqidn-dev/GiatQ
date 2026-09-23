@@ -162,6 +162,14 @@
           <p>Free tetap berguna setiap hari. Premium membuka target, insight, dan sistem pembiasaan yang lebih lengkap.</p>
           <div class="premium-hero-foot"><span>◆</span> Semua fitur tetap terlihat, buka saat kamu butuh.</div>
         </div>
+        <div id="ownerPremiumAccess" class="owner-access-card hidden">
+          <div class="owner-access-icon">✓</div>
+          <div><span class="section-kicker">OWNER ACCESS</span><h2>Premium aktif penuh</h2><p>Akun Owner tidak memerlukan pembelian atau pembayaran paket Premium.</p></div>
+        </div>
+        <section class="plans-section" id="plansSection">
+          <div class="section-head premium-plan-head"><div><span class="section-kicker">PILIH PAKET</span><h2>Paket Premium</h2><p class="section-subtitle">Pilih paket yang sesuai untuk membuka fitur Premium.</p></div></div>
+          <div id="premiumPlans" class="plans-grid"><div class="plan-loading">Memuat paket…</div></div>
+        </section>
         <div class="premium-grid">
           <button class="premium-feature" data-premium="TargetKU"><span class="feature-icon">◎</span><div><strong>TargetKU</strong><p>One Day One Juz, lari 5 km, puasa Senin–Kamis, dan target custom.</p></div><b>🔒</b></button>
           <button class="premium-feature" data-premium="Adaptive Baby Step"><span class="feature-icon">↗</span><div><strong>Adaptive Baby Step</strong><p>Target menyesuaikan konsistensi agar tetap realistis.</p></div><b>🔒</b></button>
@@ -183,7 +191,7 @@
           <div class="setting-row"><span>WhatsApp</span><strong id="profileWhatsapp">-</strong></div>
           <div class="setting-row"><span>Kota / Kabupaten</span><strong id="profileCity">-</strong></div>
           <div class="setting-row"><span>Sinkronisasi offline</span><strong>Aktif</strong></div>
-          <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.3.0</strong></div>
+          <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.3.2</strong></div>
           <div class="setting-row"><span>Brand</span><strong>Biasakan yang baik</strong></div>
         </div>
         <button id="logoutButton" class="btn btn-danger">Keluar akun</button>
@@ -226,12 +234,25 @@
     <div class="modal-card paywall-card">
       <div class="modal-handle"></div>
       <button class="close-button paywall-close" data-close-paywall>×</button>
-      <div class="paywall-icon">◆</div>
+      <div class="paywall-brand-logo"><img src="assets/icon-192-v2.png" alt="Logo GiatQ" /><strong>GiatQ</strong></div>
       <span class="pill">GIATQ PREMIUM</span>
       <h3 id="paywallTitle">Buka fitur Premium</h3>
       <p id="paywallCopy">Dapatkan target, insight, laporan lengkap, dan sistem baby step yang lebih pintar.</p>
-      <button class="btn btn-primary full">Lihat Paket Premium</button>
+      <button id="openPremiumPlans" class="btn btn-primary full">Lihat Paket Premium</button>
       <button class="btn btn-ghost full" data-close-paywall>Nanti saja</button>
+    </div>
+  </dialog>
+
+  <dialog id="premiumOrderModal" class="modal">
+    <div class="modal-card premium-order-card">
+      <div class="modal-handle"></div>
+      <button class="close-button paywall-close" data-close-order>×</button>
+      <span class="pill">PESANAN PREMIUM</span>
+      <h3 id="premiumOrderTitle">Paket Premium</h3>
+      <div id="premiumOrderPrice" class="order-price">Rp0</div>
+      <p id="premiumOrderMessage">Pesanan sedang disiapkan.</p>
+      <div id="premiumOrderCode" class="order-code"></div>
+      <button class="btn btn-primary full" data-close-order>Mengerti</button>
     </div>
   </dialog>
 

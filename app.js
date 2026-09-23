@@ -14,6 +14,8 @@
     apiModeResolved: null,
     syncTimer: null,
     syncInFlight: false,
+    premiumPlans: [],
+    navHistoryReady: false,
   };
   const DAYS = [
     ['MON','Sen'],['TUE','Sel'],['WED','Rab'],['THU','Kam'],['FRI','Jum'],['SAT','Sab'],['SUN','Min']
@@ -33,6 +35,7 @@
       if(state.sessionToken) await recoverSession(true);
     });
     window.addEventListener('offline', updateOnlineState);
+    window.addEventListener('popstate', handleHardwareBack);
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
 
     if(state.sessionToken){
@@ -62,6 +65,9 @@
     $('#openRegister').addEventListener('click', showRegistrationShell);
     $('#backToLogin').addEventListener('click', showAuthShell);
     $('#registrationForm').addEventListener('submit', saveRegistrationFromForm);
+    $('#openPremiumPlans')?.addEventListener('click', openPremiumPlans);
+    $$('[data-close-order]').forEach(b=>b.addEventListener('click',()=>$('#premiumOrderModal').close()));
+    $$('dialog').forEach(d=>d.addEventListener('cancel',e=>{ e.preventDefault(); d.close(); }));
   }
 
   async function setupAuth(){
@@ -116,6 +122,7 @@
   function showAppShell(){
     hideAllShells();
     $('#appView').classList.remove('hidden');
+    ensureAppHistory();
   }
 
   function showAuthShell(){
@@ -291,12 +298,38 @@
     }catch(e){toast(e.message);}
   }
 
-  function openScreen(name){
+  function openScreen(name, opts={}){
+    const previous=state.activeScreen;
     state.activeScreen=name;
     $$('.screen').forEach(s=>s.classList.remove('active')); $(`#screen${name}`).classList.add('active');
     $$('.nav-item').forEach(b=>b.classList.toggle('active',b.dataset.screen===name));
-    if(name==='Report') loadReport(); if(name==='Activities') loadActivities();
+    if(name==='Report') loadReport(); if(name==='Activities') loadActivities(); if(name==='Premium') loadPremiumPlans();
+    if(opts.pushHistory!==false && state.navHistoryReady && previous!==name){
+      history.pushState({giatq:true,screen:name},'',location.href);
+    }
     window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function ensureAppHistory(){
+    if(state.navHistoryReady || !state.sessionToken) return;
+    state.navHistoryReady=true;
+    history.replaceState({giatq:true,screen:'Today',root:true},'',location.href);
+    history.pushState({giatq:true,screen:state.activeScreen||'Today'},'',location.href);
+  }
+
+  function handleHardwareBack(){
+    if(!state.sessionToken || !state.navHistoryReady) return;
+    const dialogs=$$('dialog[open]');
+    if(dialogs.length){
+      dialogs[dialogs.length-1].close();
+      history.pushState({giatq:true,screen:state.activeScreen},'',location.href);
+      return;
+    }
+    if(state.activeScreen!=='Today'){
+      openScreen('Today',{pushHistory:false});
+      history.replaceState({giatq:true,screen:'Today'},'',location.href);
+    }
+    // Jika sudah di Hari Ini, back berikutnya mengikuti perilaku Android/PWA normal.
   }
   async function loadActivities(){ try{state.activities=await apiGet('activities');renderActivities();}catch(e){toast(e.message);} }
 
@@ -335,6 +368,7 @@
     $('#profileAvatar').textContent=(p.full_name||u.display_name||'G')[0].toUpperCase();
     if($('#profileWhatsapp')) $('#profileWhatsapp').textContent=p.whatsapp?('+'+p.whatsapp):'-';
     if($('#profileCity')) $('#profileCity').textContent=p.city||'-';
+    renderPremiumAccessState();
   }
   async function saveRegistrationFromForm(e){
     e.preventDefault();
@@ -382,13 +416,93 @@
     }
   }
 
-  function openPaywall(feature){ $('#paywallTitle').textContent=`Buka ${feature}`; $('#paywallCopy').textContent=`${feature} tersedia di GiatQ Premium. Free tetap bisa digunakan untuk checklist, kegiatan harian, persentase, dan laporan harian dasar.`; $('#paywallModal').showModal(); }
-  async function logout(){
-    const ok=confirm('Keluar dari GiatQ?');
-    if(!ok) return;
-    try{await apiPost('logout',{});}catch(_){ }
+  function openPaywall(feature){
+    const ent=state.me?.entitlements||{};
+    if(ent.premium){
+      toast(ent.owner ? `${feature} sudah aktif untuk akun Owner.` : `${feature} sudah termasuk paket Premium kamu.`);
+      return;
+    }
+    $('#paywallTitle').textContent=`Buka ${feature}`;
+    $('#paywallCopy').textContent=`${feature} tersedia di GiatQ Premium.`;
+    $('#paywallModal').showModal();
+  }
+
+  function openPremiumPlans(){
+    $('#paywallModal')?.close();
+    openScreen('Premium');
+    setTimeout(()=>$('#plansSection')?.scrollIntoView({behavior:'smooth',block:'start'}),80);
+  }
+
+  async function loadPremiumPlans(){
+    const root=$('#premiumPlans'); if(!root) return;
+    renderPremiumAccessState();
+    const ent=state.me?.entitlements||{};
+    if(ent.paymentsDisabled || ent.owner){
+      root.innerHTML='';
+      return;
+    }
+    if(state.premiumPlans?.length){ renderPremiumPlans(); return; }
+    root.innerHTML='<div class="plan-loading">Memuat paket…</div>';
+    try{
+      const out=await apiGet('premiumPlans');
+      state.premiumPlans=Array.isArray(out?.plans)?out.plans:[];
+      renderPremiumPlans();
+    }catch(e){
+      root.innerHTML='<div class="plan-loading">Paket belum dapat dimuat.</div>';
+      toast(e.message);
+    }
+  }
+
+  function renderPremiumAccessState(){
+    const ent=state.me?.entitlements||{};
+    const ownerCard=$('#ownerPremiumAccess');
+    const plansSection=$('#plansSection');
+    if(ownerCard) ownerCard.classList.toggle('hidden',!ent.owner);
+    if(plansSection) plansSection.classList.toggle('hidden',!!(ent.owner || ent.paymentsDisabled));
+    $$('.premium-feature b').forEach(b=>{ b.textContent=ent.premium?'✓':'🔒'; });
+  }
+
+  function renderPremiumPlans(){
+    const root=$('#premiumPlans'); if(!root) return;
+    renderPremiumAccessState();
+    root.innerHTML='';
+    state.premiumPlans.forEach(p=>{
+      const card=document.createElement('article');
+      card.className='plan-card'+(p.is_recommended?' recommended':'');
+      const features=(p.features||[]).slice(0,5).map(x=>`<li>✓ ${esc(x)}</li>`).join('');
+      card.innerHTML=`${p.badge?`<span class="plan-badge">${esc(p.badge)}</span>`:''}<h3>${esc(p.name)}</h3><div class="plan-price">${rupiah(p.price)}</div><p>${esc(p.short_description||'')}</p><ul>${features}</ul><button class="btn ${p.is_recommended?'btn-primary':'btn-soft'} full">Pilih Paket</button>`;
+      $('button',card).addEventListener('click',()=>createPremiumOrder(p));
+      root.appendChild(card);
+    });
+  }
+
+  async function createPremiumOrder(plan){
+    const ent=state.me?.entitlements||{};
+    if(ent.paymentsDisabled || ent.owner){
+      toast(ent.owner ? 'Akun Owner sudah memiliki Premium penuh.' : 'Pembayaran dinonaktifkan untuk akun ini.');
+      return;
+    }
+    try{
+      const out=await apiPost('createPremiumOrder',{plan_id:plan.plan_id});
+      if(out?.owner_access){ toast(out.message||'Premium Owner aktif.'); return; }
+      $('#premiumOrderTitle').textContent=plan.name;
+      $('#premiumOrderPrice').textContent=rupiah(plan.price);
+      $('#premiumOrderCode').textContent='Kode pesanan: '+(out?.order?.order_id||'-');
+      $('#premiumOrderMessage').textContent=out?.payment_ready?'Lanjutkan pembayaran untuk mengaktifkan Premium.':'Pesanan sudah tercatat. Pembayaran otomatis sedang kita siapkan; paket belum aktif sampai pembayaran terkonfirmasi.';
+      $('#premiumOrderModal').showModal();
+    }catch(e){ toast(e.message); }
+  }
+
+  function rupiah(v){
+    return new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(v||0));
+  }
+  function logout(){
+    // Keluar langsung tanpa dialog browser. Revoke server berjalan di belakang layar.
+    const revoke=state.sessionToken ? apiPost('logout',{}).catch(()=>{}) : Promise.resolve();
     clearSession();
-    location.reload();
+    history.replaceState({giatqAuth:true},'',location.href);
+    showAuthShell();
+    Promise.resolve(revoke).catch(()=>{});
   }
   function clearSession(){
     state.sessionToken='';
@@ -400,6 +514,8 @@
     localStorage.removeItem('giatq_today_cache');
     localStorage.removeItem('giatq_queue');
     localStorage.removeItem('giatq_registration_done');
+    state.navHistoryReady=false;
+    state.activeScreen='Today';
   }
 
   async function apiGet(action, params={}){
