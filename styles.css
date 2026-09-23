@@ -76,3 +76,217 @@ linear-gradient(180deg,#F7FBFE 0%,#F3F8FC 100%);min-height:100vh}.hidden{display
 .registration-submit{width:100%;padding:14px;margin-top:2px}
 .registration-note{text-align:center;color:#91A3B0;font-size:10.5px;margin:14px 0 0}
 @media(max-width:520px){.registration-view{align-items:start;padding-top:18px}.registration-card{padding:22px 18px;border-radius:26px}.registration-card h1{font-size:27px}.registration-grid{grid-template-columns:1fr}.splash-mark img{width:96px;height:96px}}
+
+
+/* DESKTOP EXPERIENCE v0.2.6 -------------------------------------------------- */
+@media(min-width:1024px){
+  body{
+    background:
+      radial-gradient(circle at 78% 8%,rgba(46,168,255,.10),transparent 28rem),
+      linear-gradient(180deg,#F7FBFE 0%,#EDF5FA 100%);
+  }
+  .app-shell{
+    width:min(1540px,100%);
+    display:grid;
+    grid-template-columns:248px minmax(0,1fr);
+    gap:24px;
+    padding:24px 28px 32px;
+    margin:0 auto;
+    align-items:start;
+  }
+  .desktop-rail{
+    display:flex;
+    position:sticky;
+    top:24px;
+    height:calc(100vh - 48px);
+    align-self:start;
+    flex-direction:column;
+    justify-content:flex-start;
+    background:rgba(255,255,255,.94);
+    border:1px solid var(--line);
+    border-radius:30px;
+    padding:22px 16px 16px;
+    box-shadow:0 18px 50px rgba(23,94,145,.08);
+    backdrop-filter:blur(16px);
+  }
+  .rail-brand{
+    display:flex;
+    align-items:center;
+    justify-content:flex-start;
+    gap:12px;
+    padding:2px 6px 22px;
+    color:var(--blue-dark);
+    font-size:20px;
+    font-weight:900;
+    letter-spacing:-.03em;
+  }
+  .rail-brand img{width:48px;height:48px;border-radius:16px;box-shadow:0 8px 18px rgba(46,168,255,.17)}
+  .rail-nav{display:grid;gap:8px}
+  .desktop-rail .nav-item{
+    grid-template-columns:28px 1fr;
+    justify-items:start;
+    align-items:center;
+    gap:11px;
+    min-height:52px;
+    padding:11px 13px;
+    border-radius:16px;
+    color:#72899A;
+  }
+  .desktop-rail .nav-item svg{width:21px;height:21px}
+  .desktop-rail .nav-item small{font-size:13px;font-weight:720}
+  .desktop-rail .nav-item.active{
+    color:var(--blue-dark);
+    background:linear-gradient(135deg,#EAF7FF,#F4FBFF);
+    box-shadow:inset 0 0 0 1px #CBEAFF;
+  }
+  .desktop-rail .nav-item.active small{font-weight:850}
+  .rail-footer{
+    margin-top:auto;
+    padding:16px 10px 6px;
+    border-top:1px solid var(--line);
+    color:var(--muted);
+  }
+  .rail-status{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:780;color:#53758A}
+  .rail-status i{width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 0 4px rgba(32,185,129,.10)}
+  .rail-footer small{display:block;margin-top:7px;font-size:10px;color:#9AABB7}
+
+  .app-main{max-width:none;width:100%;padding:0 0 38px;min-width:0}
+  .app-header{
+    position:sticky;
+    top:20px;
+    z-index:25;
+    min-height:78px;
+    margin:0 0 18px;
+    padding:14px 18px;
+    border:1px solid rgba(217,233,244,.92);
+    border-radius:22px;
+    background:rgba(255,255,255,.90);
+    box-shadow:0 10px 30px rgba(23,94,145,.055);
+    backdrop-filter:blur(18px);
+  }
+  .brand-row{font-size:22px;color:var(--ink)}
+  .brand-row img{display:block;width:38px;height:38px;border-radius:12px}
+  .header-date{margin-left:47px;font-size:12px}
+  .sync-chip{display:flex}
+  .icon-button{width:44px;height:44px;border-radius:14px;box-shadow:none}
+
+  #screenToday.active{
+    display:grid;
+    grid-template-columns:minmax(0,1.55fr) 340px;
+    grid-template-areas:
+      "hero summary"
+      "head head"
+      "list list"
+      "empty empty";
+    gap:16px 18px;
+    align-items:start;
+  }
+  #screenToday .hero-card{grid-area:hero;margin:0;min-height:210px;padding:34px 36px;border-radius:30px}
+  #screenToday .summary-strip{
+    grid-area:summary;
+    margin:0;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:10px;
+    align-content:stretch;
+    background:rgba(255,255,255,.94);
+    border:1px solid var(--line);
+    border-radius:26px;
+    padding:16px;
+    box-shadow:var(--shadow-soft);
+    min-height:210px;
+  }
+  #screenToday .summary-strip div{
+    border:0;
+    background:linear-gradient(135deg,#F8FCFF,#F2F9FE);
+    border-radius:17px;
+    padding:15px 16px;
+    box-shadow:none;
+  }
+  #screenToday .summary-strip span{font-size:11px}
+  #screenToday .summary-strip strong{font-size:22px}
+  #screenToday .section-head{grid-area:head;margin:4px 4px 0}
+  #screenToday .activity-list{grid-area:list;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #screenToday .empty-state{grid-area:empty}
+  .hero-copy h1{font-size:64px}
+  .hero-copy p{font-size:14px}
+  .score-ring{width:138px}
+  .score-ring span{font-size:24px}
+
+  #screenActivities .activity-list{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  #screenActivities .page-title,#screenReport .page-title,#screenPremium .premium-hero,#screenProfile .page-title{margin-top:4px}
+  .page-title h2{font-size:31px}
+  .page-title p{font-size:13px}
+
+  #screenReport.active{
+    display:grid;
+    grid-template-columns:minmax(0,1.15fr) minmax(320px,.85fr);
+    gap:16px;
+    align-items:start;
+  }
+  #screenReport .page-title{grid-column:1/-1}
+  #screenReport .report-card{grid-row:2/span 2;min-height:325px;padding:28px;border-radius:28px}
+  #screenReport .premium-preview{margin-top:0;min-height:150px}
+  .report-score{font-size:64px}
+
+  #screenPremium .premium-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+  #screenPremium .premium-hero{padding:32px 34px;border-radius:30px}
+  #screenPremium .premium-hero h2{font-size:36px;max-width:560px}
+
+  #screenProfile.active{
+    display:grid;
+    grid-template-columns:minmax(320px,.72fr) minmax(460px,1.28fr);
+    grid-template-areas:
+      "title title"
+      "profile settings"
+      "profile logout";
+    gap:16px 18px;
+    align-items:start;
+  }
+  #screenProfile .page-title{grid-area:title}
+  #screenProfile .profile-card{grid-area:profile;min-height:190px;padding:26px;border-radius:28px;align-items:flex-start;flex-wrap:wrap}
+  #screenProfile .avatar{width:68px;height:68px;border-radius:21px;font-size:26px}
+  #screenProfile .profile-copy h2{font-size:22px}
+  #screenProfile .plan-badge{margin-left:auto}
+  #screenProfile .settings-list{grid-area:settings;margin-top:0;border-radius:24px}
+  #screenProfile .setting-row{padding:18px 20px;font-size:13px}
+  #screenProfile #logoutButton{grid-area:logout;margin:0}
+
+  .activity-card{min-height:76px;padding:14px 15px;border-radius:19px}
+  .activity-main strong{font-size:14.5px}
+  .check-button{width:42px;height:42px}
+  .time-pill{font-size:11px;padding:6px 9px}
+
+  .bottom-nav{display:none!important}
+  .modal-card{width:min(680px,calc(100% - 48px));bottom:50%;transform:translate(-50%,50%);border-radius:28px;max-height:86vh;padding:24px 26px}
+  .modal-handle{display:none}
+  .toast{bottom:30px}
+
+  /* Desktop auth & registration become a wider product screen, not a stretched phone card */
+  .auth-view,.registration-view{
+    grid-template-columns:minmax(360px,1fr) minmax(440px,520px);
+    gap:54px;
+    padding:52px max(44px,7vw);
+  }
+  .auth-view::before,.registration-view::before{
+    content:"GiatQ\A Biasakan yang baik\A\A Bangun kebiasaan baik dengan langkah kecil yang konsisten.";
+    white-space:pre-line;
+    justify-self:end;
+    max-width:520px;
+    font-size:44px;
+    line-height:1.08;
+    letter-spacing:-.045em;
+    font-weight:880;
+    color:#123A55;
+    padding:28px 10px;
+  }
+  .auth-card,.registration-card{justify-self:start;width:100%;max-width:520px}
+  .auth-card{padding:38px}
+  .registration-card{padding:30px}
+}
+
+@media(min-width:1360px){
+  .app-shell{grid-template-columns:264px minmax(0,1fr);gap:28px;padding-left:36px;padding-right:36px}
+  #screenToday.active{grid-template-columns:minmax(0,1.7fr) 370px}
+  #screenToday .activity-list,#screenActivities .activity-list{grid-template-columns:repeat(3,minmax(0,1fr))}
+}

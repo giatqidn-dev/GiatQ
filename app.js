@@ -187,6 +187,8 @@
     if(!state.sessionToken) return;
     const [me,today,activities] = await Promise.all([apiGet('me'),apiGet('today'),apiGet('activities')]);
     state.me=me; state.today=today; state.activities=activities; state.registration=me?.registration||null;
+    // Jangan biarkan response server yang sedikit tertinggal menimpa tap lokal yang masih antre.
+    applyQueuedEventsToToday(getQueue());
     if(state.registration?.registered) localStorage.setItem('giatq_registration_done','1');
     renderToday(); renderActivities(); renderProfile(); updateHeaderDate();
     localStorage.setItem('giatq_today_cache',JSON.stringify(today));
@@ -377,7 +379,13 @@
   }
 
   function openPaywall(feature){ $('#paywallTitle').textContent=`Buka ${feature}`; $('#paywallCopy').textContent=`${feature} tersedia di GiatQ Premium. Free tetap bisa digunakan untuk checklist, kegiatan harian, persentase, dan laporan harian dasar.`; $('#paywallModal').showModal(); }
-  async function logout(){ try{await apiPost('logout',{});}catch(_){ } clearSession(); location.reload(); }
+  async function logout(){
+    const ok=confirm('Keluar akun akan menghapus sesi di perangkat ini. Pada mode DEV kamu akan diminta memasukkan token lagi. Untuk sekadar menutup GiatQ, gunakan tombol Home/Back tanpa menekan Keluar akun. Lanjut keluar akun?');
+    if(!ok) return;
+    try{await apiPost('logout',{});}catch(_){ }
+    clearSession();
+    location.reload();
+  }
   function clearSession(){state.sessionToken='';localStorage.removeItem('giatq_session');localStorage.removeItem('giatq_registration_done');}
 
   async function apiGet(action, params={}){
@@ -437,24 +445,54 @@
   }
   async function flushQueue(){
     if(!navigator.onLine||!state.sessionToken||state.syncInFlight)return;
-    const q=getQueue(); if(!q.length)return;
+    const sent=getQueue(); if(!sent.length)return;
+    const sentIds=new Set(sent.map(x=>x.id));
     state.syncInFlight=true;
     setSyncState('syncing');
     try{
-      // v0.2.1: SATU HTTP request untuk banyak tap.
-      const bundle=await apiPost('syncEvents',{events:q});
-      localStorage.setItem('giatq_queue','[]');
-      if(bundle?.activities){ state.today=bundle; renderToday(); localStorage.setItem('giatq_today_cache',JSON.stringify(bundle)); }
-      setSyncState('synced');
+      // Kirim snapshot antrean. Tap baru yang terjadi selama request TIDAK boleh ikut terhapus.
+      const bundle=await apiPost('syncEvents',{events:sent});
+      const current=getQueue();
+      const remaining=current.filter(x=>!sentIds.has(x.id));
+      localStorage.setItem('giatq_queue',JSON.stringify(remaining));
+      if(bundle?.activities){
+        state.today=bundle;
+        // Response server merefleksikan batch yang barusan dikirim. Re-apply tap yang lebih baru.
+        applyQueuedEventsToToday(remaining);
+        renderToday();
+        localStorage.setItem('giatq_today_cache',JSON.stringify(state.today));
+      }
+      setSyncState(remaining.length?'pending':'synced');
     }catch(e){
       // Queue tetap ada; UI lokal tidak dibatalkan. Akan retry saat online/sync berikutnya.
       console.warn('GiatQ sync pending',e);
       setSyncState('pending');
     }finally{
       state.syncInFlight=false;
-      // Kalau user menekan checklist saat request berjalan, kirim batch berikutnya.
       if(getQueue().length && navigator.onLine) scheduleFlush();
     }
+  }
+
+  function applyQueuedEventsToToday(events){
+    if(!state.today?.activities || !Array.isArray(events) || !events.length) return;
+    for(const item of events){
+      const body=item?.body||{};
+      const a=state.today.activities.find(x=>String(x.activity_id)===String(body.activity_id));
+      if(!a) continue;
+      if(item.action==='toggleChecklist'){
+        const done=body.done!==false;
+        a.status=done?'DONE':'PENDING';
+        a.completion_percent=done?100:0;
+        a.progress_value=done?Number(a.target_value||1):0;
+      }else if(item.action==='setProgress'){
+        const value=Number(body.value||0);
+        const target=Math.max(.0001,Number(a.target_value||1));
+        a.progress_value=value;
+        a.completion_percent=Math.min(100,Math.round(value/target*10000)/100);
+        a.status=a.completion_percent>=100?'DONE':'PENDING';
+      }
+    }
+    recomputeLocalScore();
   }
   function updateOnlineState(){
     $('#offlineBar').classList.toggle('hidden',navigator.onLine);
