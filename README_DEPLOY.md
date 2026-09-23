@@ -1,56 +1,41 @@
-# GiatQ PWA v0.2.0
+# GiatQ PWA v0.2.4 — Onboarding
 
 Brand: **GiatQ — Biasakan yang baik**  
-Warna utama: **#28A3FE** (biru langit dari logo)
+Backend minimum: **GiatQ Core v0.1.6**
 
 ## Isi versi ini
-- Login Google (siap setelah Client ID diisi) + Session DEV untuk testing.
-- Dashboard Hari Ini.
-- Checklist live.
-- Progress kegiatan jumlah/durasi/jarak.
-- Persentase pencapaian harian.
-- KegiatanKU: tambah, ubah, arsip.
-- Jadwal harian atau hari tertentu.
-- Laporan harian yang direbuild saat dibuka.
-- Menu Premium tetap terlihat dan membuka paywall.
-- Offline app shell + antrean checklist/progress untuk sync ulang.
-- Cloudflare Pages Function `/api` sebagai proxy aman/praktis ke Apps Script.
+- Icon Android/PWA diperbaiki dan dibuat maskable dengan kontras yang benar.
+- Splash GiatQ saat aplikasi dibuka.
+- Registrasi profil satu kali setelah session valid.
+- Data registrasi tersimpan ke sheet `REGISTRATIONS`.
+- Persistent session dari v0.2.3.
+- Instant checklist + batch sync dari v0.2.1.
+- Redesign UI dari v0.2.2.
+- Service worker baru agar update GitHub Pages lebih cepat terbaca.
 
-## Kenapa ada /api proxy?
-Apps Script ContentService melakukan redirect ke `script.googleusercontent.com`. Direct browser fetch dari PWA eksternal, terutama POST pada mobile, dapat bermasalah karena CORS/redirect. Karena itu paket ini menyertakan Cloudflare Pages Function yang menjadi lapisan tipis:
+## Urutan deploy
+1. Replace `Code.gs` dengan GiatQ Core v0.1.6.
+2. Apps Script: Save → `GIATQ_validateSchema()` → `GIATQ_health()`.
+3. Manage deployments → Edit → New version → Deploy.
+4. Replace isi repo GitHub Pages dengan isi ZIP PWA v0.2.4.
+5. Tunggu GitHub Pages selesai build/publish.
+6. Karena icon Android lama biasanya masih dicache, hapus/uninstall GiatQ yang lama dari homescreen lalu install ulang.
 
-PWA → `/api` (same origin) → Apps Script → Google Sheets
+## Pengujian DEV
+Jika browser masih memiliki session DEV yang valid, splash akan langsung menuju registrasi atau dashboard.
+Jika reinstall menghapus site storage, masukkan DEV session token satu kali lagi. Setelah tersimpan, session tetap dipertahankan selama masih valid.
 
-Business logic dan database tetap berada di Apps Script + Google Sheets.
+## Registrasi admin database
+Field yang disimpan:
+- nama lengkap
+- WhatsApp
+- email
+- kota/kabupaten
+- aktivitas/profesi
+- sumber mengetahui GiatQ
+- consent
+- status
+- waktu registrasi/update
 
-## 1. Update Apps Script
-Gunakan `GIATQ_AppsScript_Core_v0.1.3_PWA_API.zip`, lalu deploy ulang deployment Web App yang sama sebagai **new version**.
-
-## 2. Testing awal tanpa Google Login
-1. Di Apps Script jalankan `GIATQ_devIssueSession()`.
-2. Copy `session_token` dari Execution log.
-3. Pada halaman login PWA pilih **Masuk dengan Session DEV**.
-4. Paste token.
-
-## 3. Google Login produksi
-Buat OAuth 2.0 Web Client ID untuk GiatQ di Google Cloud Console.
-- Authorized JavaScript origin: domain PWA final, contoh `https://giatq.pages.dev`
-- Setelah mendapat Client ID, isi `GOOGLE_CLIENT_ID` di `config.js`.
-- Di Apps Script jalankan:
-  `GIATQ_setGoogleClientId('xxxxx.apps.googleusercontent.com')`
-- Deploy Apps Script new version lagi.
-
-## 4. Deploy ke Cloudflare Pages
-Paling rapi gunakan Git integration atau Wrangler agar folder `functions/` ikut terdeploy.
-Set Environment Variable opsional:
-- `GIATQ_GAS_URL` = URL Apps Script `/exec`
-
-Jika env tidak diisi, function memakai URL GiatQ yang sudah tertanam di source paket ini.
-
-## 5. PWA install
-Setelah HTTPS aktif, buka GiatQ dari Chrome/Android lalu pilih **Add to Home Screen / Install app**.
-
-## Catatan keamanan
-- Jangan simpan client secret OAuth di frontend. Yang dipakai PWA hanya **Client ID**, bukan secret.
-- Session token GiatQ disimpan di localStorage pada versi awal. Untuk versi produksi lanjutan, bisa ditingkatkan ke token rotation + device sessions atau cookie same-site pada proxy.
-- Fitur Premium masih berupa paywall/entitlement foundation; pembayaran belum diaktifkan.
+## Produksi
+Token manual hanya untuk testing. Tahap produksi sebaiknya memakai Google Login/OTP; session GiatQ tetap dibuat dan disimpan otomatis setelah autentikasi.

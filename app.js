@@ -9,6 +9,7 @@
     today: null,
     activities: [],
     report: null,
+    registration: null,
     activeScreen: 'Today',
     apiModeResolved: null,
     syncTimer: null,
@@ -21,15 +22,29 @@
   document.addEventListener('DOMContentLoaded', init);
 
   async function init(){
+    const splashStarted=Date.now();
     $('#appVersion').textContent = C.APP_VERSION;
     renderDaysPicker();
     bindUI();
     updateOnlineState();
-    window.addEventListener('online', async()=>{ updateOnlineState(); await flushQueue(); if(state.sessionToken) await refreshAll(); });
+    window.addEventListener('online', async()=>{
+      updateOnlineState();
+      await flushQueue();
+      if(state.sessionToken) await recoverSession(true);
+    });
     window.addEventListener('offline', updateOnlineState);
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
-    await setupAuth();
-    if(state.sessionToken) await enterApp();
+
+    if(state.sessionToken){
+      restoreWarmStart();
+      await recoverSession(false);
+    } else {
+      await setupAuth();
+      showAuthShell();
+    }
+    const remain=Math.max(0,780-(Date.now()-splashStarted));
+    if(remain) await new Promise(r=>setTimeout(r,remain));
+    hideSplash();
   }
 
   function bindUI(){
@@ -46,9 +61,13 @@
     $('#devSessionButton').addEventListener('click',()=>$('#devSessionModal').showModal());
     $$('[data-close-dev]').forEach(b=>b.addEventListener('click',()=>$('#devSessionModal').close()));
     $('#devSessionForm').addEventListener('submit', connectDevSession);
+    $('#registrationForm').addEventListener('submit', saveRegistrationFromForm);
   }
 
+  let authInitialized=false;
   async function setupAuth(){
+    if(authInitialized) return;
+    authInitialized=true;
     if(C.GOOGLE_CLIENT_ID){
       $('#authHint').textContent = 'Masuk dengan akun Google untuk menyimpan progres GiatQ.';
       await waitForGoogle();
@@ -90,22 +109,85 @@
   }
 
   async function enterApp(){
+    await recoverSession(false);
+  }
+
+  function hideAllShells(){
+    $('#authView').classList.add('hidden');
+    $('#registrationView').classList.add('hidden');
+    $('#appView').classList.add('hidden');
+  }
+
+  function showAppShell(){
+    hideAllShells();
+    $('#appView').classList.remove('hidden');
+  }
+
+  function showAuthShell(){
+    hideAllShells();
+    $('#authView').classList.remove('hidden');
+  }
+
+  function showRegistrationShell(){
+    hideAllShells();
+    prefillRegistration();
+    $('#registrationView').classList.remove('hidden');
+  }
+
+  function hideSplash(){
+    const s=$('#splashView');
+    if(!s) return;
+    s.classList.add('leaving');
+    setTimeout(()=>s.classList.add('hidden'),320);
+  }
+
+  function restoreWarmStart(){
+    try{
+      const cached=JSON.parse(localStorage.getItem('giatq_today_cache')||'null');
+      if(cached){
+        state.today=cached;
+        renderToday();
+        updateHeaderDate();
+      }
+    }catch(_){ }
+    setSyncState(navigator.onLine?'pending':'offline');
+  }
+
+  async function recoverSession(fromOnlineEvent){
+    if(!state.sessionToken) return;
     try{
       await refreshAll();
-      $('#authView').classList.add('hidden');
-      $('#appView').classList.remove('hidden');
+      if(state.registration?.registered) showAppShell();
+      else showRegistrationShell();
+      return true;
     }catch(e){
-      if(/Session|login/i.test(e.message)){ clearSession(); }
-      $('#authView').classList.remove('hidden');
-      $('#appView').classList.add('hidden');
-      toast(e.message);
+      if(isSessionError(e)){
+        clearSession();
+        await setupAuth();
+        showAuthShell();
+        toast('Sesi berakhir. Silakan masuk kembali.');
+        return false;
+      }
+      const registrationCached=localStorage.getItem('giatq_registration_done')==='1';
+      if(registrationCached) showAppShell();
+      else showRegistrationShell();
+      setSyncState(navigator.onLine?'pending':'offline');
+      if(!fromOnlineEvent) toast('Belum tersambung ke server. Data terakhir tetap ditampilkan.');
+      return false;
     }
+  }
+
+  function isSessionError(e){
+    const msg=String(e?.message||'');
+    const code=String(e?.code||'');
+    return /Session diperlukan|Session tidak valid|Session sudah berakhir|Session kedaluwarsa|login kembali/i.test(msg) || /SESSION/i.test(code);
   }
 
   async function refreshAll(){
     if(!state.sessionToken) return;
     const [me,today,activities] = await Promise.all([apiGet('me'),apiGet('today'),apiGet('activities')]);
-    state.me=me; state.today=today; state.activities=activities;
+    state.me=me; state.today=today; state.activities=activities; state.registration=me?.registration||null;
+    if(state.registration?.registered) localStorage.setItem('giatq_registration_done','1');
     renderToday(); renderActivities(); renderProfile(); updateHeaderDate();
     localStorage.setItem('giatq_today_cache',JSON.stringify(today));
     await flushQueue();
@@ -245,12 +327,58 @@
   }
 
   function renderProfile(){
-    const u=state.me?.user||{}, ent=state.me?.entitlements||{};
-    $('#profileName').textContent=u.display_name||'Pengguna GiatQ'; $('#profileEmail').textContent=u.email||''; $('#profilePlan').textContent=ent.plan||'FREE'; $('#profileAvatar').textContent=(u.display_name||'G')[0].toUpperCase();
+    const u=state.me?.user||{}, ent=state.me?.entitlements||{}, p=state.registration?.profile||{};
+    $('#profileName').textContent=p.full_name||u.display_name||'Pengguna GiatQ';
+    $('#profileEmail').textContent=p.email||u.email||'';
+    $('#profilePlan').textContent=ent.plan||'FREE';
+    $('#profileAvatar').textContent=(p.full_name||u.display_name||'G')[0].toUpperCase();
+    if($('#profileWhatsapp')) $('#profileWhatsapp').textContent=p.whatsapp?('+'+p.whatsapp):'-';
+    if($('#profileCity')) $('#profileCity').textContent=p.city||'-';
   }
+  function prefillRegistration(){
+    const u=state.me?.user||{}, p=state.registration?.profile||{};
+    $('#regFullName').value=p.full_name||u.display_name||'';
+    $('#regWhatsapp').value=p.whatsapp||'';
+    $('#regEmail').value=p.email||u.email||'';
+    $('#regCity').value=p.city||'';
+    $('#regOccupation').value=p.occupation||'';
+    $('#regReferral').value=p.referral_source||'';
+    $('#regConsent').checked=Boolean(p.consent_privacy);
+  }
+
+  async function saveRegistrationFromForm(e){
+    e.preventDefault();
+    const btn=$('#registrationSubmit');
+    const profile={
+      full_name:$('#regFullName').value.trim(),
+      whatsapp:$('#regWhatsapp').value.trim(),
+      email:$('#regEmail').value.trim(),
+      city:$('#regCity').value.trim(),
+      occupation:$('#regOccupation').value,
+      referral_source:$('#regReferral').value,
+      consent_privacy:$('#regConsent').checked,
+    };
+    if(!profile.full_name||!profile.whatsapp||!profile.city||!profile.consent_privacy){
+      toast('Lengkapi data wajib terlebih dahulu.');
+      return;
+    }
+    const oldText=btn.textContent; btn.disabled=true; btn.textContent='Menyimpan...';
+    try{
+      state.registration=await apiPost('saveRegistration',{profile});
+      localStorage.setItem('giatq_registration_done','1');
+      await refreshAll();
+      showAppShell();
+      toast('Profil GiatQ tersimpan.');
+    }catch(err){
+      toast(err.message);
+    }finally{
+      btn.disabled=false; btn.textContent=oldText;
+    }
+  }
+
   function openPaywall(feature){ $('#paywallTitle').textContent=`Buka ${feature}`; $('#paywallCopy').textContent=`${feature} tersedia di GiatQ Premium. Free tetap bisa digunakan untuk checklist, kegiatan harian, persentase, dan laporan harian dasar.`; $('#paywallModal').showModal(); }
   async function logout(){ try{await apiPost('logout',{});}catch(_){ } clearSession(); location.reload(); }
-  function clearSession(){state.sessionToken='';localStorage.removeItem('giatq_session');}
+  function clearSession(){state.sessionToken='';localStorage.removeItem('giatq_session');localStorage.removeItem('giatq_registration_done');}
 
   async function apiGet(action, params={}){
     return apiRequest('GET',action,params,true);
@@ -266,7 +394,11 @@
       try{
         const out=await rawRequest(mode,method,payload);
         state.apiModeResolved=mode;
-        if(!out?.ok) throw new Error(out?.error?.message||'API GiatQ gagal.');
+        if(!out?.ok){
+          const err=new Error(out?.error?.message||'API GiatQ gagal.');
+          err.code=out?.error?.code||'';
+          throw err;
+        }
         return out.data;
       }catch(e){lastErr=e;if(C.API_MODE!=='auto')break;}
     }

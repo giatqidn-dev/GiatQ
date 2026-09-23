@@ -6,14 +6,71 @@
   <meta name="theme-color" content="#2EA8FF" />
   <meta name="description" content="GiatQ — Biasakan yang baik" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="assets/icon-192.png" />
-  <link rel="apple-touch-icon" href="assets/icon-192.png" />
+  <link rel="icon" href="assets/icon-192-v2.png" />
+  <link rel="apple-touch-icon" href="assets/icon-192-v2.png" />
   <link rel="preconnect" href="https://accounts.google.com" />
   <link rel="stylesheet" href="styles.css" />
   <title>GiatQ — Biasakan yang baik</title>
 </head>
 <body>
+  <section id="splashView" class="splash-view">
+    <div class="splash-mark">
+      <img src="assets/icon-512-v2.png" alt="GiatQ" />
+      <strong>GiatQ</strong>
+      <span>Biasakan yang baik</span>
+    </div>
+  </section>
+
   <div id="offlineBar" class="offline-bar hidden">Offline — progres tetap tersimpan dan akan disinkronkan saat internet kembali.</div>
+
+  <main id="registrationView" class="registration-view hidden">
+    <div class="auth-glow auth-glow-a"></div>
+    <div class="auth-glow auth-glow-b"></div>
+    <section class="registration-card">
+      <div class="registration-brand">
+        <img src="assets/icon-192-v2.png" alt="GiatQ" />
+        <div><strong>GiatQ</strong><span>Biasakan yang baik</span></div>
+      </div>
+      <span class="auth-kicker">SELAMAT DATANG</span>
+      <h1>Kenalan dulu, yuk.</h1>
+      <p class="registration-copy">Data ini menjadi profil GiatQ dan database pengguna untuk admin. Kamu cukup mengisinya sekali.</p>
+      <form id="registrationForm" class="registration-form">
+        <label>Nama lengkap<input id="regFullName" maxlength="120" autocomplete="name" placeholder="Nama lengkap" required /></label>
+        <label>Nomor WhatsApp<input id="regWhatsapp" inputmode="tel" autocomplete="tel" placeholder="08xxxxxxxxxx" required /></label>
+        <div class="registration-grid">
+          <label>Email<input id="regEmail" type="email" autocomplete="email" placeholder="nama@email.com" /></label>
+          <label>Kota / Kabupaten<input id="regCity" maxlength="120" autocomplete="address-level2" placeholder="Contoh: Purwakarta" required /></label>
+        </div>
+        <div class="registration-grid">
+          <label>Aktivitas / Profesi
+            <select id="regOccupation">
+              <option value="">Pilih (opsional)</option>
+              <option>Pelajar / Mahasiswa</option>
+              <option>Karyawan</option>
+              <option>Pengusaha</option>
+              <option>Profesional</option>
+              <option>Ibu Rumah Tangga</option>
+              <option>Lainnya</option>
+            </select>
+          </label>
+          <label>Tahu GiatQ dari
+            <select id="regReferral">
+              <option value="">Pilih (opsional)</option>
+              <option>Teman / Keluarga</option>
+              <option>Instagram</option>
+              <option>TikTok</option>
+              <option>WhatsApp</option>
+              <option>Komunitas</option>
+              <option>Lainnya</option>
+            </select>
+          </label>
+        </div>
+        <label class="consent-row"><input id="regConsent" type="checkbox" required /><span>Saya setuju data profil ini disimpan untuk akun GiatQ dan pengelolaan pengguna.</span></label>
+        <button id="registrationSubmit" class="btn btn-primary registration-submit" type="submit">Mulai GiatQ</button>
+      </form>
+      <p class="registration-note">Data profil bersifat privat dan tidak ditampilkan ke pengguna lain.</p>
+    </section>
+  </main>
 
   <main id="authView" class="auth-view">
     <div class="auth-glow auth-glow-a"></div>
@@ -154,8 +211,10 @@
           <span id="profilePlan" class="plan-badge">FREE</span>
         </div>
         <div class="settings-list">
+          <div class="setting-row"><span>WhatsApp</span><strong id="profileWhatsapp">-</strong></div>
+          <div class="setting-row"><span>Kota / Kabupaten</span><strong id="profileCity">-</strong></div>
           <div class="setting-row"><span>Sinkronisasi offline</span><strong>Aktif</strong></div>
-          <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.2.2</strong></div>
+          <div class="setting-row"><span>Versi PWA</span><strong id="appVersion">0.2.4</strong></div>
           <div class="setting-row"><span>Brand</span><strong>Biasakan yang baik</strong></div>
         </div>
         <button id="logoutButton" class="btn btn-danger">Keluar dari GiatQ</button>

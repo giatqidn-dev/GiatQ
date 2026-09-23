@@ -1,16 +1,32 @@
 {
+  "id": "./",
   "name": "GiatQ — Biasakan yang baik",
   "short_name": "GiatQ",
   "description": "Checklist kegiatan harian dan pembiasaan baik, sedikit demi sedikit.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#F3F8FC",
+  "background_color": "#F7FBFE",
   "theme_color": "#2EA8FF",
   "orientation": "portrait-primary",
   "icons": [
-    {"src":"assets/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
-    {"src":"assets/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"},
-    {"src":"assets/icon-maskable-512.png","sizes":"512x512","type":"image/png","purpose":"maskable"}
+    {
+      "src": "assets/icon-192-v2.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/icon-maskable-512-v2.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }
